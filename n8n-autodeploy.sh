@@ -1,23 +1,23 @@
 #!/bin/bash
 set -e
 
-# Gỡ chặn firewall nếu cần
+echo "[1/6] Cập nhật hệ thống..."
+apt update -y && apt upgrade -y
+
+echo "[2/6] Cài đặt gói cần thiết..."
+apt install -y docker.io docker-compose curl unzip
+
+echo "[3/6] Tạo thư mục làm việc cho n8n..."
+mkdir -p /n8n_data && cd /n8n_data
+
+echo "[4/6] Tải docker-compose.yml mới nhất..."
+curl -L https://raw.githubusercontent.com/alogame3690/n8n-deploy/main/docker-compose.yml -o docker-compose.yml
+
+echo "[5/6] Khởi tạo hệ thống n8n..."
+docker compose up -d
+
+echo "[6/6] Mở firewall nếu cần..."
 ufw allow 5678 || true
 ufw reload || true
 
-# Cập nhật và cài Docker nếu chưa có
-apt update -y
-apt install -y docker.io docker-compose unzip curl
-
-# Tạo thư mục nếu chưa có
-mkdir -p /n8n_data
-
-# Tải gói triển khai từ GitHub hoặc URL cố định nếu cần
-curl -L -o n8n.zip http://103.172.179.11/files/n8n-deploy-package.zip
-unzip -o n8n.zip
-
-# Cấp quyền cho script khởi động
-chmod +x deploy.sh
-
-# Khởi động hệ thống
-./deploy.sh
+echo "✅ Cài đặt hoàn tất. Truy cập: http://<YOUR-IP>:5678 để bắt đầu dùng n8n."
