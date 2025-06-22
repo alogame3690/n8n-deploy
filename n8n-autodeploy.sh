@@ -1,66 +1,70 @@
 #!/bin/bash
+
 set -e
 
-# ===========================
-# 🚀 Cài Docker & Docker Compose
-# ===========================
-echo "\n🔧 Đang cài Docker & Docker Compose..."
-apt update && apt install -y docker.io docker-compose
+# ========== CẤU HÌNH ==========
+N8N_VERSION="1.66.0"
+DIR="/opt/n8n"
+COMPOSE_FILE="$DIR/docker-compose.yml"
 
-# ===========================
-# 📁 Tạo thư mục /opt/n8n
-# ===========================
-echo "\n📁 Tạo thư mục chạy dự án n8n..."
-mkdir -p /opt/n8n && cd /opt/n8n
+# ========== MÀU ==========
+GREEN='\033[1;32m'
+RED='\033[1;31m'
+NC='\033[0m'
 
-# ===========================
-# 📄 Tạo file docker-compose.yml
-# ===========================
-echo "\n📄 Tạo file docker-compose.yml..."
-cat > docker-compose.yml <<EOF
-version: "3.7"
+echo -e "${GREEN}🛠️ BẮT ĐẦU CÀI ĐẶT N8N TỰ ĐỘNG...${NC}"
+
+# ========== BƯỚC 1: CẬP NHẬT VPS ==========
+echo -e "${GREEN}➤ Cập nhật hệ thống...${NC}"
+sudo apt update -y && sudo apt upgrade -y
+
+# ========== BƯỚC 2: CÀI DOCKER ==========
+echo -e "${GREEN}➤ Cài đặt Docker...${NC}"
+curl -fsSL https://get.docker.com | bash
+sudo usermod -aG docker $USER
+
+# ========== BƯỚC 3: CÀI DOCKER COMPOSE v2 ==========
+echo -e "${GREEN}➤ Cài Docker Compose v2...${NC}"
+mkdir -p ~/.docker/cli-plugins
+curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+chmod +x ~/.docker/cli-plugins/docker-compose
+
+# ========== BƯỚC 4: TẠO THƯ MỤC TRIỂN KHAI ==========
+echo -e "${GREEN}➤ Tạo thư mục: $DIR${NC}"
+sudo mkdir -p "$DIR"
+sudo chown -R $USER:$USER "$DIR"
+cd "$DIR"
+
+# ========== BƯỚC 5: TẠO FILE docker-compose.yml ==========
+echo -e "${GREEN}➤ Viết file docker-compose.yml...${NC}"
+
+cat > "$COMPOSE_FILE" <<EOF
+version: "3.8"
+
 services:
   n8n:
-    image: n8nio/n8n:1.66.0
+    image: n8nio/n8n:${N8N_VERSION}
+    container_name: n8n
     restart: always
     ports:
       - "5678:5678"
-    environment:
-      - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=ntvn8n123
-      - WEBHOOK_URL=https://ntvn8n.xyz/
-      - GENERIC_TIMEZONE=Asia/Ho_Chi_Minh
     volumes:
       - n8n_data:/home/node/.n8n
+    environment:
+      - GENERIC_TIMEZONE=Asia/Ho_Chi_Minh
+      - TZ=Asia/Ho_Chi_Minh
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin123
+      - WEBHOOK_TUNNEL_URL=http://localhost:5678
+
 volumes:
   n8n_data:
 EOF
 
-# ===========================
-# 🌐 Cài Caddy Reverse Proxy (có chứng chỉ SSL)
-# ===========================
-echo "\n🌐 Cài đặt Caddy reverse proxy..."
-apt install -y debian-keyring debian-archive-keyring apt-transport-https
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-archive-keyring.gpg
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list
-apt update && apt install caddy -y
+# ========== BƯỚC 6: KHỞI CHẠY ==========
+echo -e "${GREEN}➤ Khởi động N8N...${NC}"
+docker compose -f "$COMPOSE_FILE" up -d
 
-# ===========================
-# 🔐 Cấu hình domain SSL cho n8n
-# ===========================
-echo "\n🔐 Tạo file cấu hình Caddy cho domain..."
-cat > /etc/caddy/Caddyfile <<EOF
-ntvn8n.xyz {
-  reverse_proxy localhost:5678
-}
-EOF
-
-# ===========================
-# 🚀 Khởi động dịch vụ
-# ===========================
-echo "\n🚀 Khởi động Docker Compose và Caddy..."
-docker compose up -d
-systemctl restart caddy
-
-echo "\n✅ Triển khai thành công tại: https://ntvn8n.xyz (user: admin / pass: ntvn8n123)"
+echo -e "${GREEN}✅ ĐÃ HOÀN TẤT! TRUY CẬP: http://<IP-VPS>:5678${NC}"
+echo -e "${GREEN}➤ Tài khoản: admin | Mật khẩu: admin123${NC}"
