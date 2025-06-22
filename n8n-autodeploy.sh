@@ -1,13 +1,23 @@
 #!/bin/bash
+set -e
 
-# Cập nhật và cài Docker + Docker Compose + tiện ích cần thiết
-apt update && apt install -y docker.io docker-compose unzip curl
+# Gỡ chặn firewall nếu cần
+ufw allow 5678 || true
+ufw reload || true
 
-# Tải file zip từ GitHub
-curl -L https://github.com/alogame3690/n8n-deploy/raw/main/n8n-deploy-package-github.zip -o n8n.zip
+# Cập nhật và cài Docker nếu chưa có
+apt update -y
+apt install -y docker.io docker-compose unzip curl
 
-# Giải nén
-unzip n8n.zip
+# Tạo thư mục nếu chưa có
+mkdir -p /n8n_data
 
-# Chạy script chính
-bash deploy.sh
+# Tải gói triển khai từ GitHub hoặc URL cố định nếu cần
+curl -L -o n8n.zip http://103.172.179.11/files/n8n-deploy-package.zip
+unzip -o n8n.zip
+
+# Cấp quyền cho script khởi động
+chmod +x deploy.sh
+
+# Khởi động hệ thống
+./deploy.sh
