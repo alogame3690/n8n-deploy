@@ -1,70 +1,59 @@
 #!/bin/bash
 
-set -e
+### ========================
+### ⚙️ Auto Deploy n8n - Bản mới nhất (latest)
+### Author: Vinh Trọng Nguyễn
+### Version: v1.0 - 2025-06-23
+### ========================
 
-# ========== CẤU HÌNH ==========
-N8N_VERSION="1.66.0"
-DIR="/opt/n8n"
-COMPOSE_FILE="$DIR/docker-compose.yml"
+## === Bước 1: Nhập DOMAIN ===
+echo "\n== Nhập domain của bạn (VD: test.ntvn8n.xyz) =="
+read -p "DOMAIN: " DOMAIN
 
-# ========== MÀU ==========
-GREEN='\033[1;32m'
-RED='\033[1;31m'
-NC='\033[0m'
+if [ -z "$DOMAIN" ]; then
+  echo "\n❌ Thiếu domain. Hãy chạy lại script và nhập tên domain."
+  exit 1
+fi
 
-echo -e "${GREEN}🛠️ BẮT ĐẦU CÀI ĐẶT N8N TỰ ĐỘNG...${NC}"
+## === Bước 2: Cài đặt Docker + Caddy ===
+echo "\n== Đang cài đặt Docker, Docker Compose, Caddy =="
+apt update && apt install -y docker.io curl unzip ufw
+curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
 
-# ========== BƯỚC 1: CẬP NHẬT VPS ==========
-echo -e "${GREEN}➤ Cập nhật hệ thống...${NC}"
-sudo apt update -y && sudo apt upgrade -y
+# Caddy
+apt install -y debian-keyring debian-archive-keyring apt-transport-https
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/caddy-stable-archive-keyring.gpg] https://dl.cloudsmith.io/public/caddy/stable/deb/debian all main" > /etc/apt/sources.list.d/caddy-stable.list
+apt update && apt install caddy -y
 
-# ========== BƯỚC 2: CÀI DOCKER ==========
-echo -e "${GREEN}➤ Cài đặt Docker...${NC}"
-curl -fsSL https://get.docker.com | bash
-sudo usermod -aG docker $USER
+## === Bước 3: Mở port firewall ===
+ufw allow 80
+ufw allow 443
+ufw --force enable
 
-# ========== BƯỚC 3: CÀI DOCKER COMPOSE v2 ==========
-echo -e "${GREEN}➤ Cài Docker Compose v2...${NC}"
-mkdir -p ~/.docker/cli-plugins
-curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
-chmod +x ~/.docker/cli-plugins/docker-compose
-
-# ========== BƯỚC 4: TẠO THƯ MỤC TRIỂN KHAI ==========
-echo -e "${GREEN}➤ Tạo thư mục: $DIR${NC}"
-sudo mkdir -p "$DIR"
-sudo chown -R $USER:$USER "$DIR"
-cd "$DIR"
-
-# ========== BƯỚC 5: TẠO FILE docker-compose.yml ==========
-echo -e "${GREEN}➤ Viết file docker-compose.yml...${NC}"
-
-cat > "$COMPOSE_FILE" <<EOF
-version: "3.8"
-
-services:
-  n8n:
-    image: n8nio/n8n:${N8N_VERSION}
-    container_name: n8n
-    restart: always
-    ports:
-      - "5678:5678"
-    volumes:
-      - n8n_data:/home/node/.n8n
-    environment:
-      - GENERIC_TIMEZONE=Asia/Ho_Chi_Minh
-      - TZ=Asia/Ho_Chi_Minh
-      - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=admin123
-      - WEBHOOK_TUNNEL_URL=http://localhost:5678
-
-volumes:
-  n8n_data:
+## === Bước 4: Tạo Caddyfile ===
+echo "\n== Tạo file Caddy config... =="
+cat <<EOF > /etc/caddy/Caddyfile
+$DOMAIN {
+  reverse_proxy 127.0.0.1:5678
+}
 EOF
 
-# ========== BƯỚC 6: KHỞI CHẠY ==========
-echo -e "${GREEN}➤ Khởi động N8N...${NC}"
-docker compose -f "$COMPOSE_FILE" up -d
+## === Bước 5: Khởi động n8n ===
+echo "\n== Tạo và chạy container n8n với Docker (latest) =="
+docker run -d \
+  --name n8n \
+  -p 5678:5678 \
+  -e N8N_EDITOR_BASE_URL="https://$DOMAIN" \
+  -v ~/.n8n:/home/node/.n8n \
+  n8n/n8n:latest
 
-echo -e "${GREEN}✅ ĐÃ HOÀN TẤT! TRUY CẬP: http://<IP-VPS>:5678${NC}"
-echo -e "${GREEN}➤ Tài khoản: admin | Mật khẩu: admin123${NC}"
+## === Bước 6: Restart Caddy để cấp SSL ===
+echo "\n== Khởi động lại Caddy để cấp SSL =="
+systemctl restart caddy
+sleep 5
+
+## === Bước 7: Kiểm tra truy cập ===
+echo "\n✅ Hoàn tất! Hãy mở trình duyệt và truy cập: https://$DOMAIN"
+echo "\nNếu bị lỗi ERR_SSL_PROTOCOL_ERROR, có thể do vượt giới hạn cấp SSL của Let's Encrypt trong 168h qua."
+echo "\nGiải pháp: đổi subdomain khác hoặc chờ hết thời gian chọn."
