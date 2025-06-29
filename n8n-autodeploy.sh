@@ -3,7 +3,7 @@
 ###############################################################################
 # VietBot AI - Script Triển Khai Sản Xuất Hoàn Chỉnh
 # Phiên bản: 2.0 - Đã Sửa Tất Cả Lỗi
-# Tác giả: TRỌNG VĨNH NGUYỄN  
+# Tác giả: TRỌNG VĨNH NGUYỄN
 # Ngày: 29 tháng 6, 2025
 # 
 # CÁC LỖI ĐÃ ĐƯỢC SỬA TỪ PHIÊN BẢN 1.0:
@@ -285,11 +285,8 @@ $DOMAIN {
         Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;"
     }
     
-    # Logging
-    log {
-        output file /var/log/caddy/access.log
-        format single_field common_log
-    }
+    # Logging (simplified)
+    log
 }
 EOF
 
