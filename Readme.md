@@ -20,6 +20,23 @@ ssh root@IP_SERVER
 # Di chuyển đến thư mục dự án
 cd /opt/vietbot
 ```
+### Khởi Chạy Script
+Option 1: Copy-Paste (Dễ nhất)
+bash# SSH vào VPS mới
+ssh root@IP_MỚI
+
+# Tạo file script
+nano deploy_vietbot.sh
+
+# Copy toàn bộ nội dung từ artifact đầu tiên, paste vào
+# Ctrl+X, Y, Enter để save
+
+# Chạy script
+chmod +x deploy_vietbot.sh
+./deploy_vietbot.sh
+
+Option 2: Wget (Nếu có URL)
+bashwget -O deploy.sh [URL] && chmod +x deploy.sh && ./deploy.sh
 
 ### Kiểm Tra Trạng Thái
 ```bash
