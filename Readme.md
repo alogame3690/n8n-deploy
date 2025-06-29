@@ -1,436 +1,455 @@
-# VietBot AI - Complete Troubleshooting Guide
+# VietBot AI - Hướng Dẫn Sử Dụng & Khắc Phục Lỗi
 
-## 🚀 Quick Deployment
+## 📋 MỤC LỤC
+1. [Hướng Dẫn Sử Dụng Cơ Bản](#hướng-dẫn-sử-dụng-cơ-bản)
+2. [Các Lệnh Quản Lý Hệ Thống](#các-lệnh-quản-lý-hệ-thống)
+3. [Khắc Phục Lỗi Phổ Biến](#khắc-phục-lỗi-phổ-biến)
+4. [Giám Sát & Bảo Trì](#giám-sát--bảo-trì)
+5. [Backup & Phục Hồi](#backup--phục-hồi)
+6. [Tối Ưu Hóa Hiệu Suất](#tối-ưu-hóa-hiệu-suất)
 
-### Method 1: Direct Download & Run
+---
+
+## 🚀 HƯỚNG DẪN SỬ DỤNG CỠ BẢN
+
+### Truy Cập Hệ Thống
 ```bash
-wget -O deploy.sh https://raw.githubusercontent.com/your-repo/vietbot-deploy.sh
-chmod +x deploy.sh
-./deploy.sh
-```
+# SSH vào server
+ssh root@IP_SERVER
 
-### Method 2: Copy-Paste Script
-1. SSH to your server
-2. Create file: `nano deploy.sh`
-3. Copy entire script from artifact above
-4. Save: `Ctrl+X` → `Y` → `Enter`
-5. Run: `chmod +x deploy.sh && ./deploy.sh`
-
-## 🔧 Management Commands
-
-### Quick Commands (Available after installation)
-```bash
-vietbot status    # Show system status
-vietbot start     # Start all services  
-vietbot stop      # Stop all services
-vietbot restart   # Restart services
-vietbot logs      # View live logs
-vietbot backup    # Create backup
-vietbot update    # Update to latest
-```
-
-### Manual Commands
-```bash
+# Di chuyển đến thư mục dự án
 cd /opt/vietbot
+```
 
-# Check container status
+### Kiểm Tra Trạng Thái
+```bash
+# Xem trạng thái tất cả containers
 docker-compose ps
 
-# View logs
+# Xem logs realtime
 docker-compose logs -f
-docker-compose logs n8n
-docker-compose logs caddy
 
-# Restart specific service
-docker-compose restart n8n
-docker-compose restart caddy
+# Kiểm tra tài nguyên hệ thống
+./giam_sat.sh
+```
 
-# Rebuild and restart
-docker-compose down
+### Quản Lý Dịch Vụ
+```bash
+# Khởi động tất cả dịch vụ
 docker-compose up -d
-```
 
-## 🆘 Common Issues & Solutions
+# Dừng tất cả dịch vụ
+docker-compose down
 
-### 1. Website Shows 502 Bad Gateway
-
-**Cause:** n8n service not ready or crashed
-
-**Solutions:**
-```bash
-# Check status
-vietbot status
-
-# Check n8n logs
-docker-compose logs n8n
-
-# Restart n8n
+# Khởi động lại dịch vụ cụ thể
 docker-compose restart n8n
-
-# If permission errors
-sudo chown -R 1000:1000 /opt/vietbot/data/n8n
-docker-compose restart n8n
-```
-
-### 2. SSL Certificate Not Working
-
-**Cause:** DNS not pointing to server or Caddy issues
-
-**Solutions:**
-```bash
-# Check DNS propagation
-nslookup yourdomain.com
-dig yourdomain.com
-
-# Check if domain points to correct IP
-ping yourdomain.com
-
-# Restart Caddy for new certificate
-docker-compose restart caddy
-
-# Check Caddy logs
-docker-compose logs caddy
-```
-
-### 3. Can't Access Website (Connection Refused)
-
-**Cause:** Firewall blocking or services not running
-
-**Solutions:**
-```bash
-# Check if services running
-docker-compose ps
-
-# Check firewall
-ufw status
-
-# Open ports if needed
-ufw allow 80/tcp
-ufw allow 443/tcp
-
-# Check if ports are listening
-netstat -tlnp | grep :80
-netstat -tlnp | grep :443
-```
-
-### 4. Database Connection Errors
-
-**Cause:** PostgreSQL not ready or permission issues
-
-**Solutions:**
-```bash
-# Check PostgreSQL status
-docker-compose logs postgres
-
-# Test database connection
-docker exec vietbot_postgres pg_isready -U vietbot -d vietbot_ai
-
-# Restart database
 docker-compose restart postgres
-
-# Wait for healthcheck
-sleep 30 && docker-compose ps
+docker-compose restart caddy
 ```
 
-### 5. n8n Keeps Restarting
+---
 
-**Cause:** File permission or configuration issues
+## 🛠️ CÁC LỆNH QUẢN LÝ HỆ THỐNG
 
-**Solutions:**
+### Scripts Quản Lý Có Sẵn
 ```bash
-# Check n8n logs for errors
-docker-compose logs n8n | tail -50
+# Kiểm tra trạng thái hệ thống
+./giam_sat.sh
+
+# Tạo backup
+./sao_luu.sh
+
+# Cập nhật hệ thống
+./cap_nhat.sh
+```
+
+### Quản Lý Docker
+```bash
+# Xem logs của container cụ thể
+docker-compose logs -f n8n
+docker-compose logs -f postgres
+docker-compose logs -f caddy
+
+# Exec vào container
+docker-compose exec n8n /bin/sh
+docker-compose exec postgres psql -U vietbot vietbot_ai
+
+# Xóa containers và tạo lại
+docker-compose down
+docker-compose up -d --force-recreate
+```
+
+### Quản Lý Database
+```bash
+# Kết nối database
+docker-compose exec postgres psql -U vietbot vietbot_ai
+
+# Backup database manual
+docker-compose exec postgres pg_dump -U vietbot vietbot_ai > backup_$(date +%Y%m%d).sql
+
+# Restore database
+docker-compose exec -T postgres psql -U vietbot vietbot_ai < backup_file.sql
+```
+
+---
+
+## 🔧 KHẮC PHỤC LỖI PHỔ BIẾN
+
+### 1. Lỗi Production URL Hiển Thị Sai
+
+**Triệu chứng:** Production URL hiển thị `https://0.0.0.0:5678/webhook/...`
+
+**Nguyên nhân:** Thiếu cấu hình WEBHOOK_URL
+
+**Giải pháp:**
+```bash
+# Kiểm tra file .env
+cat .env | grep DOMAIN
+
+# Kiểm tra docker-compose.yml có đúng cấu hình không
+grep WEBHOOK_URL docker-compose.yml
+
+# Restart n8n để apply config mới
+docker-compose restart n8n
+```
+
+### 2. Lỗi Container Không Khởi Động
+
+**Triệu chứng:** `docker-compose ps` hiển thị Exit hoặc Unhealthy
+
+**Giải pháp:**
+```bash
+# Xem logs chi tiết
+docker-compose logs CONTAINER_NAME
+
+# Kiểm tra port conflicts
+netstat -tulpn | grep :5678
+netstat -tulpn | grep :80
+netstat -tulpn | grep :443
 
 # Fix permissions
-sudo chown -R 1000:1000 /opt/vietbot/data/n8n
-sudo chmod -R 755 /opt/vietbot/data/n8n
+chown -R 1000:1000 /var/lib/docker/volumes/vietbot_n8n_data/_data
 
-# Clear n8n data (WARNING: loses workflows)
-rm -rf /opt/vietbot/data/n8n/*
-docker-compose restart n8n
+# Restart container
+docker-compose restart CONTAINER_NAME
 ```
 
-### 6. High Memory Usage
+### 3. Lỗi SSL Certificate
 
-**Cause:** Too many executions or memory leak
+**Triệu chứng:** Website hiển thị "Not Secure" hoặc SSL error
 
-**Solutions:**
+**Giải pháp:**
 ```bash
-# Check memory usage
+# Kiểm tra Caddy logs
+docker-compose logs caddy
+
+# Restart Caddy để renew SSL
+docker-compose restart caddy
+
+# Kiểm tra DNS pointing
+nslookup YOUR_DOMAIN
+
+# Test SSL manually
+curl -I https://YOUR_DOMAIN
+```
+
+### 4. Lỗi Database Connection
+
+**Triệu chứng:** n8n không kết nối được database
+
+**Giải pháp:**
+```bash
+# Kiểm tra postgres health
+docker-compose ps postgres
+
+# Test database connection
+docker-compose exec postgres pg_isready -U vietbot
+
+# Kiểm tra environment variables
+docker-compose exec n8n env | grep DB_
+
+# Restart database
+docker-compose restart postgres n8n
+```
+
+### 5. Lỗi Out of Memory
+
+**Triệu chứng:** Containers bị kill, OOMKilled
+
+**Giải pháp:**
+```bash
+# Kiểm tra memory usage
 free -h
 docker stats
 
-# Clear old executions (in n8n interface)
-# Settings → Executions → Clear all
-
-# Restart services
+# Restart containers để clear memory
 docker-compose restart
 
-# Add memory limits to docker-compose.yml
-# Add under each service:
-# mem_limit: 512m
+# Thêm swap nếu cần
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
 ```
 
-### 7. Slow Performance
+### 6. Lỗi Disk Full
 
-**Cause:** Resource constraints or inefficient workflows
+**Triệu chứng:** "No space left on device"
 
-**Solutions:**
+**Giải pháp:**
 ```bash
-# Check system resources
-htop
-iotop
-
-# Check disk space
+# Kiểm tra disk usage
 df -h
 
-# Optimize database
-docker exec vietbot_postgres psql -U vietbot -d vietbot_ai -c "VACUUM ANALYZE;"
+# Dọn dẹp Docker
+docker system prune -f
+docker volume prune -f
 
-# Clean old backups
+# Dọn dẹp logs
+docker-compose logs > /dev/null
+truncate -s 0 /var/log/syslog
+
+# Xóa backups cũ
 find /opt/vietbot/backups -mtime +7 -delete
 ```
 
-## 📊 Monitoring & Maintenance
+---
 
-### Health Checks
+## 📊 GIÁM SÁT & BẢO TRÌ
+
+### Giám Sát Hàng Ngày
 ```bash
-# Quick health check
-vietbot status
-
-# Detailed monitoring
-cd /opt/vietbot && ./monitor.sh
-
-# Check website response
-curl -I https://yourdomain.com
-
-# Check n8n API
-curl -I http://localhost:5678/healthz
-```
-
-### Regular Maintenance
-```bash
-# Daily backup (automated via cron)
-vietbot backup
-
-# Weekly update
-vietbot update
-
-# Monthly cleanup
-docker system prune -f
-find /opt/vietbot/logs -mtime +30 -delete
-```
-
-### Log Management
-```bash
-# View real-time logs
-vietbot logs
-
-# View specific service logs
-docker-compose logs -f n8n
-docker-compose logs -f caddy
-docker-compose logs -f postgres
-
-# Logs location
-/opt/vietbot/logs/
-/var/log/caddy/
-```
-
-## 🔒 Security Best Practices
-
-### 1. Change Default Passwords
-```bash
-# Edit environment file
-nano /opt/vietbot/.env
-
-# Change N8N_BASIC_AUTH_PASSWORD
-# Change POSTGRES_PASSWORD
-# Change REDIS_PASSWORD
-
-# Restart services
-docker-compose restart
-```
-
-### 2. Enable Additional Security
-```bash
-# Install additional security tools
-apt install -y fail2ban ufw lynis
-
-# Configure fail2ban for HTTP
-# Edit: /etc/fail2ban/jail.local
-
-# Regular security updates
-apt update && apt upgrade -y
-```
-
-### 3. Backup & Recovery
-```bash
-# Manual backup
-vietbot backup
-
-# Restore from backup
+# Script kiểm tra tự động
+#!/bin/bash
 cd /opt/vietbot
+
+echo "=== VietBot Health Check $(date) ==="
+
+# Check containers
+if ! docker-compose ps | grep -q "Up.*healthy"; then
+    echo "❌ Container unhealthy"
+    docker-compose ps
+fi
+
+# Check disk space
+DISK_USAGE=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
+if [ $DISK_USAGE -gt 80 ]; then
+    echo "⚠️ Disk usage high: ${DISK_USAGE}%"
+fi
+
+# Check memory
+MEM_USAGE=$(free | grep Mem | awk '{printf "%.0f", ($3/$2)*100}')
+if [ $MEM_USAGE -gt 85 ]; then
+    echo "⚠️ Memory usage high: ${MEM_USAGE}%"
+fi
+
+# Check n8n health
+if ! curl -f -s http://localhost:5678/healthz > /dev/null; then
+    echo "❌ n8n health check failed"
+fi
+
+echo "✅ Health check completed"
+```
+
+### Cron Jobs Tự Động
+```bash
+# Thêm vào crontab
+crontab -e
+
+# Health check mỗi 15 phút
+*/15 * * * * /opt/vietbot/health_check.sh >> /var/log/vietbot_health.log 2>&1
+
+# Backup hàng ngày lúc 2h sáng
+0 2 * * * /opt/vietbot/sao_luu.sh >> /var/log/vietbot_backup.log 2>&1
+
+# Clean up logs hàng tuần
+0 3 * * 0 find /var/log -name "*.log" -mtime +7 -delete
+
+# Update system hàng tháng
+0 4 1 * * /opt/vietbot/cap_nhat.sh >> /var/log/vietbot_update.log 2>&1
+```
+
+---
+
+## 💾 BACKUP & PHỤC HỒI
+
+### Backup Hoàn Chỉnh
+```bash
+#!/bin/bash
+BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_ROOT="/opt/vietbot/backups/full_backup_$BACKUP_DATE"
+
+mkdir -p $BACKUP_ROOT
+
+# Backup database
+docker-compose exec -T postgres pg_dump -U vietbot vietbot_ai > $BACKUP_ROOT/database.sql
+
+# Backup n8n data
+docker run --rm -v vietbot_n8n_data:/data -v $BACKUP_ROOT:/backup alpine tar czf /backup/n8n_data.tar.gz -C /data .
+
+# Backup configurations
+cp -r /opt/vietbot/*.yml /opt/vietbot/*.env /opt/vietbot/Caddyfile $BACKUP_ROOT/
+
+# Backup Docker volumes
+docker run --rm -v vietbot_caddy_data:/data -v $BACKUP_ROOT:/backup alpine tar czf /backup/caddy_data.tar.gz -C /data .
+
+echo "Full backup completed: $BACKUP_ROOT"
+```
+
+### Phục Hồi Từ Backup
+```bash
+#!/bin/bash
+BACKUP_DIR="/opt/vietbot/backups/full_backup_YYYYMMDD_HHMMSS"
+
+if [ ! -d "$BACKUP_DIR" ]; then
+    echo "Backup directory not found: $BACKUP_DIR"
+    exit 1
+fi
+
+# Stop services
 docker-compose down
 
 # Restore database
 docker-compose up -d postgres
-docker exec -i vietbot_postgres psql -U vietbot -d vietbot_ai < backups/db_backup_YYYYMMDD.sql
+sleep 10
+docker-compose exec -T postgres psql -U vietbot vietbot_ai < $BACKUP_DIR/database.sql
 
 # Restore n8n data
-tar -xzf backups/n8n_backup_YYYYMMDD.tar.gz -C data/n8n/
+docker run --rm -v vietbot_n8n_data:/data -v $BACKUP_DIR:/backup alpine sh -c "cd /data && tar xzf /backup/n8n_data.tar.gz"
+
+# Restore configurations
+cp $BACKUP_DIR/*.yml $BACKUP_DIR/*.env $BACKUP_DIR/Caddyfile /opt/vietbot/
 
 # Start all services
 docker-compose up -d
+
+echo "Restore completed from: $BACKUP_DIR"
 ```
 
-## 🚀 Performance Optimization
+---
 
-### 1. Resource Allocation
-```yaml
-# Add to docker-compose.yml under each service
-services:
-  n8n:
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '0.5'
-        reservations:
-          memory: 512M
-          cpus: '0.25'
-```
+## ⚡ TỐI ỦU HÓA HIỆU SUẤT
 
-### 2. Database Optimization
+### Cấu Hình n8n
 ```bash
-# Connect to database
-docker exec -it vietbot_postgres psql -U vietbot -d vietbot_ai
+# Thêm vào docker-compose.yml environment section
+- N8N_EXECUTIONS_TIMEOUT=300
+- N8N_EXECUTIONS_TIMEOUT_MAX=600
+- N8N_EXECUTIONS_DATA_SAVE_ON_SUCCESS=none
+- N8N_EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS=false
+- N8N_LOG_LEVEL=warn
+```
 
-# Optimize queries
+### Tối Ưu Database
+```sql
+-- Kết nối database
+docker-compose exec postgres psql -U vietbot vietbot_ai
+
+-- Analyze tables
 ANALYZE;
-VACUUM;
 
-# Check database size
-SELECT pg_size_pretty(pg_database_size('vietbot_ai'));
+-- Reindex
+REINDEX DATABASE vietbot_ai;
+
+-- Clean old executions
+DELETE FROM execution_entity WHERE "startedAt" < NOW() - INTERVAL '30 days';
 ```
 
-### 3. Caddy Optimization
-```caddyfile
-# Add to Caddyfile
-{
-    servers {
-        metrics
-    }
-}
-
-yourdomain.com {
-    # Enable caching
-    cache {
-        cache_duration 1h
-    }
-    
-    # Compress responses
-    encode gzip zstd
-    
-    reverse_proxy n8n:5678
-}
-```
-
-## 📞 Getting Help
-
-### 1. Check Logs First
+### Tối Ưu Hệ Thống
 ```bash
+# Tăng file descriptors
+echo "fs.file-max = 65536" >> /etc/sysctl.conf
+
+# Tối ưu TCP
+echo "net.core.somaxconn = 65536" >> /etc/sysctl.conf
+echo "net.ipv4.tcp_max_syn_backlog = 65536" >> /etc/sysctl.conf
+
+# Apply changes
+sysctl -p
+
+# Tối ưu Docker
+echo '{"log-driver": "json-file", "log-opts": {"max-size": "10m", "max-file": "3"}}' > /etc/docker/daemon.json
+systemctl restart docker
+```
+
+---
+
+## 📞 HỖ TRỢ & LIÊN HỆ
+
+### Logs Quan Trọng
+```bash
+# n8n logs
+docker-compose logs n8n | tail -100
+
+# Database logs
+docker-compose logs postgres | tail -100
+
+# Caddy/SSL logs
+docker-compose logs caddy | tail -100
+
 # System logs
-vietbot status
-vietbot logs
-
-# Specific service logs
-docker-compose logs servicename
+tail -100 /var/log/syslog
 ```
 
-### 2. Common Log Locations
-- **VietBot logs:** `/opt/vietbot/logs/`
-- **Docker logs:** `docker-compose logs`
-- **System logs:** `/var/log/syslog`
-- **Caddy logs:** `/var/log/caddy/`
-
-### 3. Information to Provide
-When seeking help, provide:
-- Error messages from logs
-- System specifications
-- Domain name and IP
-- Steps that led to the issue
-- Output of `vietbot status`
-
-### 4. Recovery Commands
+### Thông Tin Debug
 ```bash
-# Nuclear option - complete reset
-cd /opt/vietbot
-docker-compose down -v
-rm -rf data/* logs/*
-docker-compose up -d
+# Thu thập thông tin debug
+#!/bin/bash
+echo "=== VietBot Debug Info ==="
+echo "Date: $(date)"
+echo "Uptime: $(uptime)"
+echo
 
-# Preserve data reset
-docker-compose down
-docker-compose up -d
+echo "=== Container Status ==="
+docker-compose ps
+echo
+
+echo "=== Resource Usage ==="
+free -h
+df -h
+echo
+
+echo "=== Network ==="
+netstat -tulpn | grep -E "(5678|80|443)"
+echo
+
+echo "=== Recent Logs ==="
+docker-compose logs --tail=50
+```
+
+### Liên Hệ Hỗ Trợ
+- **Issues**: Tạo issue với thông tin debug
+- **Emergency**: Sử dụng script health_check.sh
+- **Performance**: Chạy script debug info
+
+---
+
+## 🔄 CẬP NHẬT HỆ THỐNG
+
+### Cập Nhật Thường Xuyên
+```bash
+# Update Docker images
+docker-compose pull
+
+# Recreate containers with new images
+docker-compose up -d --force-recreate
+
+# Clean old images
+docker image prune -f
+```
+
+### Backup Trước Khi Cập Nhật
+```bash
+# Luôn backup trước khi update
+./sao_luu.sh
+
+# Kiểm tra backup thành công
+ls -la /opt/vietbot/backups/
+
+# Sau đó mới update
+./cap_nhat.sh
 ```
 
 ---
 
-## 📋 Deployment Checklist
-
-### Pre-Deployment
-- [ ] Server has minimum 2GB RAM, 1 CPU
-- [ ] Domain DNS pointing to server IP
-- [ ] Ports 80, 443 open
-- [ ] SSH access working
-
-### Post-Deployment
-- [ ] Website accessible via HTTPS
-- [ ] SSL certificate valid
-- [ ] n8n login working
-- [ ] All containers healthy
-- [ ] Backup script working
-- [ ] Monitoring script working
-
-### Production Ready
-- [ ] Import workflows
-- [ ] Configure API keys
-- [ ] Setup webhooks
-- [ ] Test automation
-- [ ] Monitor performance
-- [ ] Schedule backups
-
----
-
-**Remember:** This script is production-tested and includes all fixes from our troubleshooting session!
-
-
-
-
-✅ ONE-COMMAND DEPLOY SCRIPT:
-
-Script tự động 100% - chỉ cần 1 command
-Tested & working từ session này
-Bao gồm tất cả fixes đã troubleshoot
-SSL tự động, monitoring, backup
-
-✅ COMPLETE TROUBLESHOOTING GUIDE:
-
-Mọi lỗi có thể gặp + cách fix
-Performance optimization
-Security best practices
-Management commands
-
-🚀 CÁCH SỬ DỤNG:
-bash# Download và chạy 1 lệnh duy nhất:
-wget -O deploy.sh [URL_to_script] && chmod +x deploy.sh && ./deploy.sh
-
-# Hoặc copy-paste script từ artifact
-💯 ĐẢM BẢO:
-
-✅ Deploy trong 10-15 phút
-✅ SSL tự động
-✅ Backup tự động
-✅ Monitoring built-in
-✅ Production ready
-✅ Easy management
+**📌 Lưu ý:** Luôn test các thay đổi trên môi trường development trước khi apply lên production!
