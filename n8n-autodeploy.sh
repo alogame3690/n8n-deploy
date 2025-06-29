@@ -3,7 +3,7 @@
 ###############################################################################
 # VietBot AI - Script Triển Khai Sản Xuất Hoàn Chỉnh
 # Phiên bản: 2.0 - Đã Sửa Tất Cả Lỗi
-# Tác giả: Claude AI Assistant  
+# Tác giả: TRỌNG VĨNH NGUYỄN  
 # Ngày: 29 tháng 6, 2025
 # 
 # CÁC LỖI ĐÃ ĐƯỢC SỬA TỪ PHIÊN BẢN 1.0:
