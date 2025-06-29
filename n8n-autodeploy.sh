@@ -186,8 +186,15 @@ services:
     container_name: vietbot_n8n
     environment:
       # SỬA QUAN TRỌNG: Cấu hình Production URL
-      - WEBHOOK_URL=https://${DOMAIN}
       - N8N_WEBHOOK_URL=https://${DOMAIN}
+      - WEBHOOK_URL=https://${DOMAIN}
+      - N8N_EDITOR_BASE_URL=https://${DOMAIN}
+      - N8N_HOST=${DOMAIN}
+      - N8N_AI_ENABLED=true
+      - N8N_EVALUATIONS_ENABLED=true
+      - N8N_FEATURES_ENABLED=ai,evaluations,workflows,github
+      - N8N_VERSION_CONTROL_ENABLED=true
+      - N8N_GIT_ENABLED=true
       
       # Host và Protocol (ĐÃ SỬA)
       - N8N_HOST=${DOMAIN}
