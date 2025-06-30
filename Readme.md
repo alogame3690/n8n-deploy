@@ -1,296 +1,348 @@
-# VietBot AI - Hướng Dẫn Sử Dụng & Khắc Phục Lỗi
+# VietBot AI v3.0 - Hướng Dẫn Sử Dụng & Khắc Phục Lỗi
 
 ## 📋 MỤC LỤC
-1. [Hướng Dẫn Sử Dụng Cơ Bản](#hướng-dẫn-sử-dụng-cơ-bản)
-2. [Các Lệnh Quản Lý Hệ Thống](#các-lệnh-quản-lý-hệ-thống)
-3. [Khắc Phục Lỗi Phổ Biến](#khắc-phục-lỗi-phổ-biến)
-4. [Giám Sát & Bảo Trì](#giám-sát--bảo-trì)
-5. [Backup & Phục Hồi](#backup--phục-hồi)
-6. [Tối Ưu Hóa Hiệu Suất](#tối-ưu-hóa-hiệu-suất)
+1. [Tính Năng Mới v3.0](#tính-năng-mới-v30)
+2. [Hướng Dẫn Triển Khai](#hướng-dẫn-triển-khai)
+3. [Quản Lý Ảnh Sản Phẩm](#quản-lý-ảnh-sản-phẩm)
+4. [Workflow với Hỗ Trợ Ảnh](#workflow-với-hỗ-trợ-ảnh)
+5. [Các Lệnh Quản Lý Hệ Thống](#các-lệnh-quản-lý-hệ-thống)
+6. [Khắc Phục Lỗi Phổ Biến](#khắc-phục-lỗi-phổ-biến)
+7. [Giám Sát & Bảo Trì](#giám-sát--bảo-trì)
+8. [Backup & Phục Hồi](#backup--phục-hồi)
 
 ---
 
-## 🚀 HƯỚNG DẪN SỬ DỤNG CỠ BẢN
+## 🚀 TÍNH NĂNG MỚI V3.0
 
-### Truy Cập Hệ Thống
+### Hỗ Trợ Ảnh Toàn Diện
+- **📸 Nhận ảnh**: Từ Facebook Messenger
+- **🤖 Phân tích ảnh**: Claude Vision API
+- **🏪 Gửi ảnh sản phẩm**: Tự động cho khách hàng
+- **💾 Lưu trữ**: Database ảnh có sẵn
+
+### Full n8n Features
+- **⭐ Evaluations tab**: Giống VPS cũ
+- **🤖 AI features**: Đầy đủ
+- **📊 Version Control**: Git integration
+- **🔧 Templates**: Community templates
+- **📈 Metrics**: Performance tracking
+
+### Kiến Trúc Mới
+```
+Facebook Messenger → n8n Webhook → Claude Vision → Product Images → Response
+                                      ↓
+                              Static Files (Caddy)
+```
+
+---
+
+## 🛠️ HƯỚNG DẪN TRIỂN KHAI
+
+### Triển Khai VPS Mới
 ```bash
-# SSH vào server
-ssh root@IP_SERVER
+# SSH vào VPS mới
+ssh root@IP_VPS_MỚI
 
-# Di chuyển đến thư mục dự án
+# Tạo và chạy script
+nano deploy_vietbot_v3.sh
+# Copy nội dung từ artifact đầu tiên
+chmod +x deploy_vietbot_v3.sh
+./deploy_vietbot_v3.sh
+```
+
+### Nhập Thông Tin
+```
+Domain: vietbot.ntvn8n.xyz
+```
+
+### Quá Trình Tự Động
+1. **Cài đặt Docker & dependencies**
+2. **Tạo thư mục dự án + images**
+3. **Cấu hình environment variables đầy đủ**
+4. **Tạo ảnh demo sản phẩm**
+5. **Setup Caddy với static files**
+6. **Khởi động containers**
+7. **Test images serving**
+
+---
+
+## 📸 QUẢN LÝ ẢNH SẢN PHẨM
+
+### Thư Mục Images
+```bash
+cd /opt/vietbot/images
+ls -la
+# nhan_sam_han_quoc.jpg
+# dong_trung_ha_thao.jpg
+# linh_chi_do.jpg
+# toi_den_ly_son.jpg
+# mat_ong_rung.jpg
+```
+
+### Upload Ảnh Mới
+```bash
+# Upload qua SCP
+scp product_image.jpg root@IP:/opt/vietbot/images/
+
+# Hoặc wget từ URL
+cd /opt/vietbot/images
+wget -O new_product.jpg "https://example.com/image.jpg"
+
+# Set permissions
+chmod 644 *.jpg
+```
+
+### Định Dạng Ảnh Chuẩn
+- **Format**: JPG/PNG
+- **Size**: < 2MB recommend
+- **Naming**: snake_case.jpg
+- **URL**: https://domain.com/images/filename.jpg
+
+### Test Images URLs
+```bash
 cd /opt/vietbot
-```
-### Khởi Chạy Script
-Option 1: Copy-Paste (Dễ nhất)
-bash# SSH vào VPS mới
-ssh root@IP_MỚI
+./test_images.sh
 
-# Tạo file script
-nano deploy_vietbot.sh
-
-# Copy toàn bộ nội dung từ artifact đầu tiên, paste vào
-# Ctrl+X, Y, Enter để save
-
-# Chạy script
-chmod +x deploy_vietbot.sh
-./deploy_vietbot.sh
-
-Option 2: Wget (Nếu có URL)
-bashwget -O deploy.sh [URL] && chmod +x deploy.sh && ./deploy.sh
-
-### Kiểm Tra Trạng Thái
-```bash
-# Xem trạng thái tất cả containers
-docker-compose ps
-
-# Xem logs realtime
-docker-compose logs -f
-
-# Kiểm tra tài nguyên hệ thống
-./giam_sat.sh
+# Manual test
+curl -I https://domain.com/images/nhan_sam_han_quoc.jpg
 ```
 
-### Quản Lý Dịch Vụ
+---
+
+## 🔧 WORKFLOW VỚI HỖ TRỢ ẢNH
+
+### Luồng Xử Lý Mới
+1. **Webhook** nhận tin nhắn (text + attachments)
+2. **Message Router** phân loại text/image
+3. **Image Downloader** tải ảnh từ Facebook
+4. **Claude Vision** phân tích ảnh + tư vấn
+5. **Product Decision** quyết định gửi ảnh sản phẩm
+6. **Send Response** + product image
+
+### Workflow JSON Structure
+```json
+{
+  "nodes": [
+    "Webhook",
+    "Message Parser", 
+    "Message Type Router",
+    "Image Downloader",
+    "Claude Vision Analyzer", 
+    "Product Image Decision",
+    "Send Product Image",
+    "Send Text Response"
+  ]
+}
+```
+
+### Environment Variables Quan Trọng
 ```bash
-# Khởi động tất cả dịch vụ
-docker-compose up -d
+# Trong docker-compose.yml
+- N8N_AI_ENABLED=true
+- N8N_EVALUATIONS_ENABLED=true
+- N8N_FEATURES_ENABLED=ai,evaluations,workflows,github
+- VUE_APP_URL_BASE_API=https://domain/
+```
 
-# Dừng tất cả dịch vụ
-docker-compose down
-
-# Khởi động lại dịch vụ cụ thể
-docker-compose restart n8n
-docker-compose restart postgres
-docker-compose restart caddy
+### Claude Vision Setup
+```javascript
+// Trong workflow node
+model: "claude-3-5-sonnet-20241022"
+systemMessage: "Bạn là chuyên gia phân tích ảnh thuốc nam..."
 ```
 
 ---
 
 ## 🛠️ CÁC LỆNH QUẢN LÝ HỆ THỐNG
 
-### Scripts Quản Lý Có Sẵn
+### Scripts Có Sẵn v3.0
 ```bash
-# Kiểm tra trạng thái hệ thống
+cd /opt/vietbot
+
+# Giám sát hệ thống + images
 ./giam_sat.sh
 
-# Tạo backup
+# Test images serving
+./test_images.sh
+
+# Backup đầy đủ (bao gồm images)
 ./sao_luu.sh
 
 # Cập nhật hệ thống
 ./cap_nhat.sh
 ```
 
-### Quản Lý Docker
+### Quản Lý Containers
 ```bash
-# Xem logs của container cụ thể
-docker-compose logs -f n8n
-docker-compose logs -f postgres
-docker-compose logs -f caddy
+# Xem trạng thái
+docker-compose ps
 
-# Exec vào container
-docker-compose exec n8n /bin/sh
-docker-compose exec postgres psql -U vietbot vietbot_ai
+# Logs realtime
+docker-compose logs -f
 
-# Xóa containers và tạo lại
+# Restart specific service
+docker-compose restart n8n
+docker-compose restart caddy
+
+# Rebuild containers
 docker-compose down
 docker-compose up -d --force-recreate
 ```
 
-### Quản Lý Database
+### Quản Lý Images
 ```bash
-# Kết nối database
-docker-compose exec postgres psql -U vietbot vietbot_ai
+# List all images
+ls -la /opt/vietbot/images/
 
-# Backup database manual
-docker-compose exec postgres pg_dump -U vietbot vietbot_ai > backup_$(date +%Y%m%d).sql
+# Check image sizes
+du -h /opt/vietbot/images/*
 
-# Restore database
-docker-compose exec -T postgres psql -U vietbot vietbot_ai < backup_file.sql
+# Test image access
+for img in $(ls /opt/vietbot/images/); do
+  curl -I https://domain.com/images/$img
+done
 ```
 
 ---
 
 ## 🔧 KHẮC PHỤC LỖI PHỔ BIẾN
 
-### 1. Lỗi Production URL Hiển Thị Sai
+### 1. Lỗi Images Không Load
 
-**Triệu chứng:** Production URL hiển thị `https://0.0.0.0:5678/webhook/...`
-
-**Nguyên nhân:** Thiếu cấu hình WEBHOOK_URL
+**Triệu chứng:** 404 khi truy cập https://domain/images/file.jpg
 
 **Giải pháp:**
 ```bash
-# Kiểm tra file .env
-cat .env | grep DOMAIN
+# Kiểm tra file tồn tại
+ls -la /opt/vietbot/images/
 
-# Kiểm tra docker-compose.yml có đúng cấu hình không
-grep WEBHOOK_URL docker-compose.yml
+# Kiểm tra Caddy config
+cat /opt/vietbot/Caddyfile
 
-# Restart n8n để apply config mới
+# Kiểm tra Caddy mount
+docker-compose exec caddy ls -la /opt/vietbot/images/
+
+# Restart Caddy
+docker-compose restart caddy
+```
+
+### 2. Claude Vision Không Hoạt Động
+
+**Triệu chứng:** Workflow không phân tích ảnh
+
+**Giải pháp:**
+```bash
+# Kiểm tra Claude credentials
+docker-compose exec n8n env | grep ANTHROPIC
+
+# Kiểm tra workflow connections
+# Đảm bảo Redis Memory connect to Image AI Analyzer
+
+# Test Claude API
+curl -H "x-api-key: YOUR_KEY" https://api.anthropic.com/v1/models
+```
+
+### 3. Evaluations Tab Không Xuất Hiện
+
+**Triệu chứng:** Không có ⭐ Evaluations tab
+
+**Giải pháp:**
+```bash
+# Kiểm tra environment variables
+docker-compose exec n8n env | grep EVALUATIONS
+docker-compose exec n8n env | grep VUE_APP
+
+# Restart n8n
 docker-compose restart n8n
+
+# Clear browser cache
+# Ctrl+Shift+R để hard refresh
 ```
 
-### 2. Lỗi Container Không Khởi Động
+### 4. Facebook Webhook Không Nhận Ảnh
 
-**Triệu chứng:** `docker-compose ps` hiển thị Exit hoặc Unhealthy
+**Triệu chứng:** Chỉ nhận text, không nhận attachments
 
 **Giải pháp:**
 ```bash
-# Xem logs chi tiết
-docker-compose logs CONTAINER_NAME
+# Kiểm tra webhook logs
+docker-compose logs n8n | grep facebook
 
-# Kiểm tra port conflicts
-netstat -tulpn | grep :5678
-netstat -tulpn | grep :80
-netstat -tulpn | grep :443
+# Kiểm tra Message Parser code
+# Đảm bảo có xử lý entry.message.attachments
 
-# Fix permissions
-chown -R 1000:1000 /var/lib/docker/volumes/vietbot_n8n_data/_data
-
-# Restart container
-docker-compose restart CONTAINER_NAME
+# Test webhook manually
+curl -X POST https://domain/webhook/facebook-webhook \
+  -H "Content-Type: application/json" \
+  -d '{"test": "data"}'
 ```
 
-### 3. Lỗi SSL Certificate
+### 5. Lỗi SSL Certificate cho Images
 
-**Triệu chứng:** Website hiển thị "Not Secure" hoặc SSL error
+**Triệu chứng:** HTTPS cert error khi load images
 
 **Giải pháp:**
 ```bash
-# Kiểm tra Caddy logs
-docker-compose logs caddy
+# Kiểm tra Caddy SSL
+docker-compose logs caddy | grep certificate
 
-# Restart Caddy để renew SSL
+# Restart Caddy để renew
 docker-compose restart caddy
 
-# Kiểm tra DNS pointing
-nslookup YOUR_DOMAIN
-
-# Test SSL manually
-curl -I https://YOUR_DOMAIN
-```
-
-### 4. Lỗi Database Connection
-
-**Triệu chứng:** n8n không kết nối được database
-
-**Giải pháp:**
-```bash
-# Kiểm tra postgres health
-docker-compose ps postgres
-
-# Test database connection
-docker-compose exec postgres pg_isready -U vietbot
-
-# Kiểm tra environment variables
-docker-compose exec n8n env | grep DB_
-
-# Restart database
-docker-compose restart postgres n8n
-```
-
-### 5. Lỗi Out of Memory
-
-**Triệu chứng:** Containers bị kill, OOMKilled
-
-**Giải pháp:**
-```bash
-# Kiểm tra memory usage
-free -h
-docker stats
-
-# Restart containers để clear memory
-docker-compose restart
-
-# Thêm swap nếu cần
-fallocate -l 2G /swapfile
-chmod 600 /swapfile
-mkswap /swapfile
-swapon /swapfile
-```
-
-### 6. Lỗi Disk Full
-
-**Triệu chứng:** "No space left on device"
-
-**Giải pháp:**
-```bash
-# Kiểm tra disk usage
-df -h
-
-# Dọn dẹp Docker
-docker system prune -f
-docker volume prune -f
-
-# Dọn dẹp logs
-docker-compose logs > /dev/null
-truncate -s 0 /var/log/syslog
-
-# Xóa backups cũ
-find /opt/vietbot/backups -mtime +7 -delete
+# Test SSL cho images path
+curl -I https://domain/images/test.jpg
 ```
 
 ---
 
 ## 📊 GIÁM SÁT & BẢO TRÌ
 
-### Giám Sát Hàng Ngày
+### Health Check Script v3.0
 ```bash
-# Script kiểm tra tự động
 #!/bin/bash
 cd /opt/vietbot
 
-echo "=== VietBot Health Check $(date) ==="
+echo "=== VietBot v3.0 Health Check $(date) ==="
 
 # Check containers
-if ! docker-compose ps | grep -q "Up.*healthy"; then
-    echo "❌ Container unhealthy"
-    docker-compose ps
-fi
+echo "🐳 Containers:"
+docker-compose ps
 
-# Check disk space
-DISK_USAGE=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
-if [ $DISK_USAGE -gt 80 ]; then
-    echo "⚠️ Disk usage high: ${DISK_USAGE}%"
-fi
+# Check images serving
+echo "📸 Images serving:"
+./test_images.sh
 
-# Check memory
-MEM_USAGE=$(free | grep Mem | awk '{printf "%.0f", ($3/$2)*100}')
-if [ $MEM_USAGE -gt 85 ]; then
-    echo "⚠️ Memory usage high: ${MEM_USAGE}%"
-fi
+# Check disk space (images folder)
+echo "💾 Disk usage:"
+du -h /opt/vietbot/images/
+df -h /opt/vietbot
 
-# Check n8n health
-if ! curl -f -s http://localhost:5678/healthz > /dev/null; then
-    echo "❌ n8n health check failed"
-fi
+# Check n8n features
+echo "🤖 n8n features:"
+curl -s http://localhost:5678/healthz
 
-echo "✅ Health check completed"
+# Check recent executions
+echo "📊 Recent activity:"
+docker-compose logs --tail=10 n8n | grep -E "(execution|workflow)"
 ```
 
-### Cron Jobs Tự Động
+### Monitoring Images
 ```bash
-# Thêm vào crontab
-crontab -e
+# Monitor image access logs
+docker-compose logs caddy | grep "/images/"
 
-# Health check mỗi 15 phút
-*/15 * * * * /opt/vietbot/health_check.sh >> /var/log/vietbot_health.log 2>&1
+# Track image storage usage
+watch du -h /opt/vietbot/images/
 
-# Backup hàng ngày lúc 2h sáng
-0 2 * * * /opt/vietbot/sao_luu.sh >> /var/log/vietbot_backup.log 2>&1
-
-# Clean up logs hàng tuần
-0 3 * * 0 find /var/log -name "*.log" -mtime +7 -delete
-
-# Update system hàng tháng
-0 4 1 * * /opt/vietbot/cap_nhat.sh >> /var/log/vietbot_update.log 2>&1
+# Monitor bandwidth usage
+nethogs  # Install: apt install nethogs
 ```
 
 ---
 
 ## 💾 BACKUP & PHỤC HỒI
 
-### Backup Hoàn Chỉnh
+### Backup v3.0 (Bao Gồm Images)
 ```bash
 #!/bin/bash
 BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
@@ -304,169 +356,148 @@ docker-compose exec -T postgres pg_dump -U vietbot vietbot_ai > $BACKUP_ROOT/dat
 # Backup n8n data
 docker run --rm -v vietbot_n8n_data:/data -v $BACKUP_ROOT:/backup alpine tar czf /backup/n8n_data.tar.gz -C /data .
 
+# Backup images (MỚI)
+tar -czf $BACKUP_ROOT/images.tar.gz -C /opt/vietbot/images .
+
 # Backup configurations
 cp -r /opt/vietbot/*.yml /opt/vietbot/*.env /opt/vietbot/Caddyfile $BACKUP_ROOT/
 
-# Backup Docker volumes
-docker run --rm -v vietbot_caddy_data:/data -v $BACKUP_ROOT:/backup alpine tar czf /backup/caddy_data.tar.gz -C /data .
-
-echo "Full backup completed: $BACKUP_ROOT"
+echo "✅ Backup v3.0 completed: $BACKUP_ROOT"
 ```
 
-### Phục Hồi Từ Backup
+### Restore Images
 ```bash
 #!/bin/bash
-BACKUP_DIR="/opt/vietbot/backups/full_backup_YYYYMMDD_HHMMSS"
+BACKUP_DIR="/path/to/backup"
 
-if [ ! -d "$BACKUP_DIR" ]; then
-    echo "Backup directory not found: $BACKUP_DIR"
-    exit 1
-fi
+# Restore images
+cd /opt/vietbot
+tar -xzf $BACKUP_DIR/images.tar.gz -C ./images/
 
-# Stop services
-docker-compose down
+# Set permissions
+chmod 644 /opt/vietbot/images/*
 
-# Restore database
-docker-compose up -d postgres
-sleep 10
-docker-compose exec -T postgres psql -U vietbot vietbot_ai < $BACKUP_DIR/database.sql
+# Test images
+./test_images.sh
 
-# Restore n8n data
-docker run --rm -v vietbot_n8n_data:/data -v $BACKUP_DIR:/backup alpine sh -c "cd /data && tar xzf /backup/n8n_data.tar.gz"
+echo "✅ Images restored"
+```
 
-# Restore configurations
-cp $BACKUP_DIR/*.yml $BACKUP_DIR/*.env $BACKUP_DIR/Caddyfile /opt/vietbot/
+### Scheduled Backup với Images
+```bash
+# Crontab entry
+0 2 * * * /opt/vietbot/sao_luu.sh >> /var/log/vietbot_backup.log 2>&1
 
-# Start all services
-docker-compose up -d
-
-echo "Restore completed from: $BACKUP_DIR"
+# Weekly image cleanup (remove unused)
+0 3 * * 0 find /opt/vietbot/images -name "*.jpg" -atime +30 -delete
 ```
 
 ---
 
-## ⚡ TỐI ỦU HÓA HIỆU SUẤT
+## 🔄 WORKFLOW IMPORT & SETUP
 
-### Cấu Hình n8n
+### Import Workflow v3.0
+1. **Vào n8n**: https://domain.com
+2. **Tạo workflow mới**
+3. **Import JSON** từ artifact
+4. **Connect Redis Memory** to Image AI Analyzer
+5. **Setup Claude credentials**
+6. **Test với ảnh**
+
+### Test Workflow Steps
 ```bash
-# Thêm vào docker-compose.yml environment section
-- N8N_EXECUTIONS_TIMEOUT=300
-- N8N_EXECUTIONS_TIMEOUT_MAX=600
-- N8N_EXECUTIONS_DATA_SAVE_ON_SUCCESS=none
-- N8N_EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS=false
-- N8N_LOG_LEVEL=warn
+# 1. Test text message
+curl -X POST https://domain/webhook/facebook-webhook
+
+# 2. Test image processing
+# Gửi ảnh qua Facebook Messenger
+
+# 3. Check execution logs
+docker-compose logs n8n | grep execution
+
+# 4. Verify image response
+# Kiểm tra bot có gửi ảnh sản phẩm không
 ```
 
-### Tối Ưu Database
-```sql
--- Kết nối database
-docker-compose exec postgres psql -U vietbot vietbot_ai
-
--- Analyze tables
-ANALYZE;
-
--- Reindex
-REINDEX DATABASE vietbot_ai;
-
--- Clean old executions
-DELETE FROM execution_entity WHERE "startedAt" < NOW() - INTERVAL '30 days';
-```
-
-### Tối Ưu Hệ Thống
+### Workflow Troubleshooting
 ```bash
-# Tăng file descriptors
-echo "fs.file-max = 65536" >> /etc/sysctl.conf
+# Check workflow status
+curl http://localhost:5678/rest/workflows
 
-# Tối ưu TCP
-echo "net.core.somaxconn = 65536" >> /etc/sysctl.conf
-echo "net.ipv4.tcp_max_syn_backlog = 65536" >> /etc/sysctl.conf
+# Check executions
+curl http://localhost:5678/rest/executions
 
-# Apply changes
-sysctl -p
-
-# Tối ưu Docker
-echo '{"log-driver": "json-file", "log-opts": {"max-size": "10m", "max-file": "3"}}' > /etc/docker/daemon.json
-systemctl restart docker
+# Debug specific node
+docker-compose logs n8n | grep "Image.*Analyzer"
 ```
 
 ---
 
-## 📞 HỖ TRỢ & LIÊN HỆ
+## 📞 HỖ TRỢ & DEBUG
 
-### Logs Quan Trọng
+### Debug Images Issues
 ```bash
-# n8n logs
-docker-compose logs n8n | tail -100
+# Test image serving
+curl -v https://domain/images/test.jpg
 
-# Database logs
-docker-compose logs postgres | tail -100
+# Check Caddy config
+docker-compose exec caddy cat /etc/caddy/Caddyfile
 
-# Caddy/SSL logs
-docker-compose logs caddy | tail -100
+# Check file permissions
+ls -la /opt/vietbot/images/
 
-# System logs
-tail -100 /var/log/syslog
+# Check container mounts
+docker inspect vietbot_caddy | grep -A 10 "Mounts"
 ```
 
-### Thông Tin Debug
+### Debug Workflow Issues  
 ```bash
-# Thu thập thông tin debug
-#!/bin/bash
-echo "=== VietBot Debug Info ==="
-echo "Date: $(date)"
-echo "Uptime: $(uptime)"
-echo
+# Check Claude Vision
+docker-compose logs n8n | grep -i "vision\|claude\|image"
 
-echo "=== Container Status ==="
-docker-compose ps
-echo
+# Check webhook data
+docker-compose logs n8n | grep -i "attachment\|facebook"
 
-echo "=== Resource Usage ==="
-free -h
-df -h
-echo
-
-echo "=== Network ==="
-netstat -tulpn | grep -E "(5678|80|443)"
-echo
-
-echo "=== Recent Logs ==="
-docker-compose logs --tail=50
+# Monitor executions
+watch docker-compose logs --tail=5 n8n
 ```
 
-### Liên Hệ Hỗ Trợ
-- **Issues**: Tạo issue với thông tin debug
-- **Emergency**: Sử dụng script health_check.sh
-- **Performance**: Chạy script debug info
-
----
-
-## 🔄 CẬP NHẬT HỆ THỐNG
-
-### Cập Nhật Thường Xuyên
+### Performance Optimization
 ```bash
-# Update Docker images
-docker-compose pull
+# Optimize images
+cd /opt/vietbot/images
+for img in *.jpg; do
+  jpegoptim --size=500k "$img"
+done
 
-# Recreate containers with new images
-docker-compose up -d --force-recreate
+# Monitor memory usage
+docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
 
-# Clean old images
-docker image prune -f
-```
-
-### Backup Trước Khi Cập Nhật
-```bash
-# Luôn backup trước khi update
-./sao_luu.sh
-
-# Kiểm tra backup thành công
-ls -la /opt/vietbot/backups/
-
-# Sau đó mới update
-./cap_nhat.sh
+# Clean old executions
+docker-compose exec postgres psql -U vietbot vietbot_ai -c \
+  "DELETE FROM execution_entity WHERE startedAt < NOW() - INTERVAL '7 days';"
 ```
 
 ---
 
-**📌 Lưu ý:** Luôn test các thay đổi trên môi trường development trước khi apply lên production!
+## 🎯 NEXT STEPS
+
+### Sau Khi Deploy Thành Công
+1. **✅ Test basic workflow** với text
+2. **✅ Upload ảnh sản phẩm thật**  
+3. **✅ Test image workflow** với Facebook
+4. **✅ Monitor performance**
+5. **✅ Setup regular backups**
+
+### Production Checklist
+- [ ] SSL certificates working
+- [ ] Images serving correctly  
+- [ ] Webhook receiving attachments
+- [ ] Claude Vision analyzing images
+- [ ] Product images sending to customers
+- [ ] Backup system running
+- [ ] Monitoring in place
+
+---
+
+**📌 Lưu ý:** VietBot v3.0 là bản nâng cấp quan trọng với đầy đủ tính năng xử lý ảnh và tất cả features như VPS cũ!
