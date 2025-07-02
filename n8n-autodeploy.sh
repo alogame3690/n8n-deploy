@@ -1,4 +1,20 @@
-#!/bin/bash
+# Database Configuration
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      
+      # Security
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_SECURE_COOKIE=false
+      - N8N_COOKIE_SAME_SITE_POLICY=lax
+      
+      # Features
+      - N8N_USER_MANAGEMENT_DISABLED=false
+      - N8N_METRICS=true
+      - NODE_ENV=production#!/bin/bash
 
 ###############################################################################
 # VietBot AI - Script Triển Khai HOÀN CHỈNH v3.2
@@ -46,13 +62,29 @@ hien_thi_loi() {
 hien_thi_trang_thai "=== Script Triển Khai VietBot AI v3.2 HOÀN CHỈNH ==="
 echo
 read -p "Nhập domain của bạn (ví dụ: vietbot.domain.com): " DOMAIN
+read -p "Nhập SSH host (ví dụ: trongvinh): " SSH_HOST
+read -p "Nhập SSH password: " SSH_PASSWORD
 
 if [[ -z "$DOMAIN" ]]; then
     hien_thi_loi "Domain là bắt buộc!"
     exit 1
 fi
 
+# Set defaults nếu không nhập
+SSH_HOST=${SSH_HOST:-"trongvinh"}
+SSH_PASSWORD=${SSH_PASSWORD:-"Vinh@3690"}
+
 hien_thi_thanh_cong "Domain đã đặt: $DOMAIN"
+hien_thi_thanh_cong "SSH Host: $SSH_HOST"
+
+# Generate credentials info
+cat > /tmp/deployment-info.txt << EOF
+=== VietBot Deployment Info ===
+Domain: $DOMAIN
+SSH Host: $SSH_HOST
+SSH Password: $SSH_PASSWORD
+Deploy Time: $(date)
+EOF
 
 ###############################################################################
 # BƯỚC 2: CHUẨN BỊ HỆ THỐNG
@@ -406,24 +438,6 @@ services:
       - DB_LOGGING_ENABLED=true
       - N8N_FRONTEND_LOGGING=true
       - N8N_DIAGNOSTICS_ENABLED=true
-      
-      # Database Configuration
-      - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=postgres
-      - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
-      - DB_POSTGRESDB_USER=${POSTGRES_USER}
-      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
-      
-      # Security
-      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
-      - N8N_SECURE_COOKIE=false
-      - N8N_COOKIE_SAME_SITE_POLICY=lax
-      
-      # Features
-      - N8N_USER_MANAGEMENT_DISABLED=false
-      - N8N_METRICS=true
-      - NODE_ENV=production
       
       # Redis Cache & Queue
       - CACHE_REDIS_HOST=redis
